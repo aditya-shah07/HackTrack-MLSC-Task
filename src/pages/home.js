@@ -2,6 +2,7 @@
  * Home Page — Landing screen with Create/Join options
  */
 import { navigate } from '../lib/router.js';
+import { getSession } from '../lib/utils.js';
 import { registerShortcut, unregisterShortcut, clearPageShortcuts } from '../lib/keyboard.js';
 
 export function homePage() {
@@ -46,6 +47,9 @@ export function homePage() {
     },
 
     render(mainEl) {
+      const session = getSession();
+      const isOrganizer = session && session.role === 'organizer' && session.hackathonId;
+
       mainEl.innerHTML = `
         <div class="home">
           <div class="home__brand">
@@ -63,6 +67,22 @@ export function homePage() {
           </div>
 
           <div class="home__actions" role="group" aria-label="Choose your role">
+            ${isOrganizer ? `
+            <button class="home__action-card" 
+                    id="action-resume" 
+                    tabindex="0"
+                    style="grid-column: 1 / -1; border-color: var(--accent-secondary);"
+                    aria-label="Resume active event. Press R for shortcut.">
+              <div class="home__action-icon" aria-hidden="true" style="color: var(--accent-secondary);"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path></svg></div>
+              <div class="home__action-content">
+                <div class="home__action-title">Resume Active Event</div>
+                <div class="home__action-desc">
+                  Re-enter the dashboard for your currently active hackathon.
+                </div>
+              </div>
+              <kbd>R</kbd>
+            </button>
+            ` : ''}
             <button class="home__action-card" 
                     id="action-create" 
                     tabindex="0"
@@ -335,9 +355,18 @@ export function homePage() {
         const actions = mainEl.querySelector('.home__actions');
         if (actions) {
           actions.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          mainEl.querySelector('#action-create').focus();
+          const firstAction = mainEl.querySelector('#action-resume') || mainEl.querySelector('#action-create');
+          if (firstAction) firstAction.focus();
         }
       });
+
+      // Resume Event
+      if (isOrganizer) {
+        const resumeBtn = mainEl.querySelector('#action-resume');
+        const resumeEvent = () => navigate(`/organizer/${session.hackathonId}`);
+        if (resumeBtn) resumeBtn.addEventListener('click', resumeEvent);
+        registerShortcut('r', 'Resume active event', resumeEvent, 'Navigation');
+      }
 
       // Register keyboard shortcuts
       clearPageShortcuts();
@@ -349,6 +378,7 @@ export function homePage() {
     cleanup() {
       unregisterShortcut('c');
       unregisterShortcut('j');
+      unregisterShortcut('r');
       const navBrand = document.querySelector('.app-header__brand');
       if (navBrand) navBrand.style.opacity = '1';
     },

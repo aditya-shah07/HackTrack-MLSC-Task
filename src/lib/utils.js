@@ -119,12 +119,12 @@ export function getDeviceId() {
  * Local session storage for current hackathon context
  */
 export function setSession(data) {
-  sessionStorage.setItem('hacktrack_session', JSON.stringify(data));
+  localStorage.setItem('hacktrack_session', JSON.stringify(data));
 }
 
 export function getSession() {
   try {
-    return JSON.parse(sessionStorage.getItem('hacktrack_session'));
+    return JSON.parse(localStorage.getItem('hacktrack_session'));
   } catch {
     return null;
   }
