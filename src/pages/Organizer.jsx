@@ -231,18 +231,30 @@ export default function Organizer() {
 
   return (
     <>
-      <div className="dashboard" style={{ paddingTop: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <button className="app-header__code" title="Click to copy join code" onClick={copyJoinCode}>
-            <span className="app-header__code-label">Code</span>
-            <span>{hackathon.join_code}</span>
-          </button>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn btn--ghost btn--sm" onClick={() => navigate('/')}>← Home</button>
-            <button className="app-header__shortcut-btn" onClick={() => toggleShortcutOverlay(true)}>?</button>
+      <header id="app-header" role="banner">
+        <nav className="app-header" aria-label="Organizer navigation">
+          <div className="app-header__inner">
+            <div className="app-header__brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+              <span className="app-header__logo" aria-hidden="true">
+                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-primary)' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </span>
+              <span className="app-header__title">HackTrack</span>
+            </div>
+            <div className="app-header__meta">
+              <button className="app-header__code" title="Click to copy join code" onClick={copyJoinCode}>
+                <span className="app-header__code-label">Code</span>
+                <span>{hackathon.join_code}</span>
+              </button>
+            </div>
+            <div className="app-header__nav">
+              <button className="btn btn--ghost btn--sm" onClick={() => navigate('/')}>← Home</button>
+              <button className="app-header__shortcut-btn" onClick={() => toggleShortcutOverlay(true)}>?</button>
+            </div>
           </div>
-        </div>
+        </nav>
+      </header>
 
+      <div className="dashboard">
         <div className="page-title-area">
           <div>
             <h1 className="page-title"><span className="page-title__accent">{hackathon.name}</span></h1>

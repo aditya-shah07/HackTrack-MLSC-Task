@@ -192,16 +192,29 @@ export default function Participant() {
   }
 
   return (
-    <div className="dashboard">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>Team: {myTeam.name}</div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-          <button className="btn btn--ghost btn--sm" onClick={() => navigate('/')}>← Leave</button>
-          <button className="app-header__shortcut-btn" onClick={() => toggleShortcutOverlay(true)}>?</button>
-        </div>
-      </div>
+    <>
+      <header id="app-header" role="banner">
+        <nav className="app-header" aria-label="Participant navigation">
+          <div className="app-header__inner">
+            <div className="app-header__brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+              <span className="app-header__logo" aria-hidden="true">
+                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-primary)' }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </span>
+              <span className="app-header__title">HackTrack</span>
+            </div>
+            <div className="app-header__meta">
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>Team: {myTeam.name}</span>
+            </div>
+            <div className="app-header__nav">
+              <button className="btn btn--ghost btn--sm" onClick={() => navigate('/')}>← Leave</button>
+              <button className="app-header__shortcut-btn" onClick={() => toggleShortcutOverlay(true)}>?</button>
+            </div>
+          </div>
+        </nav>
+      </header>
 
-      <div className="page-title-area">
+      <div className="dashboard">
+        <div className="page-title-area">
         <h1 className="page-title"><span className="page-title__accent">{hackathon.name}</span></h1>
       </div>
 
@@ -316,5 +329,6 @@ export default function Participant() {
         )}
       </div>
     </div>
+    </>
   );
 }
