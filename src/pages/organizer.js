@@ -40,10 +40,18 @@ export function organizerPage(params) {
             <div class="app-header__meta">
               <button class="app-header__code" 
                       id="btn-copy-code" 
-                      title="Click to copy join code"
+                      title="Click to copy join code for participants"
                       aria-label="Copy join code">
-                <span class="app-header__code-label">Code</span>
+                <span class="app-header__code-label">Join Code</span>
                 <span id="header-code">------</span>
+              </button>
+              <button class="app-header__code" 
+                      id="btn-copy-key" 
+                      title="Click to copy your secret Organizer Key"
+                      aria-label="Copy organizer key"
+                      style="border-color: var(--accent-secondary); color: var(--text-primary);">
+                <span class="app-header__code-label" style="color: var(--accent-secondary);">Organizer Key</span>
+                <span id="header-key" style="font-family: var(--font-mono); font-size: 0.85em;">••••••••••••</span>
               </button>
             </div>
             <div class="app-header__nav">
@@ -63,6 +71,7 @@ export function organizerPage(params) {
 
       headerEl.querySelector('#btn-go-home')?.addEventListener('click', () => navigate('/'));
       headerEl.querySelector('#btn-copy-code')?.addEventListener('click', copyJoinCode);
+      headerEl.querySelector('#btn-copy-key')?.addEventListener('click', copyOrganizerKey);
       headerEl.querySelector('#btn-show-shortcuts-org')?.addEventListener('click', () => {
         import('../lib/keyboard.js').then(m => m.toggleShortcutOverlay(true));
       });
@@ -94,9 +103,12 @@ export function organizerPage(params) {
         return;
       }
 
-      // Update header code
+      // Update header code & key
       const codeEl = document.getElementById('header-code');
       if (codeEl) codeEl.textContent = hackathon.join_code;
+
+      const keyEl = document.getElementById('header-key');
+      if (keyEl) keyEl.textContent = hackathon.id.substring(0, 8) + '...';
 
       renderDashboard(mainEl);
       setupRealtimeSubscriptions(mainEl);
@@ -729,7 +741,19 @@ export function organizerPage(params) {
       showToast({ title: 'Copied!', message: `Join code: ${hackathon.join_code}`, type: 'success', duration: 2000 });
       announceToSR('Join code copied to clipboard');
     } catch {
-      showToast({ title: 'Code', message: hackathon.join_code, type: 'info' });
+      showToast({ title: 'Join Code', message: hackathon.join_code, type: 'info' });
+    }
+  }
+
+  // ---- Copy organizer key ----
+  async function copyOrganizerKey() {
+    if (!hackathon) return;
+    try {
+      await navigator.clipboard.writeText(hackathon.id);
+      showToast({ title: 'Copied!', message: 'Secret Organizer Key copied to clipboard.', type: 'success', duration: 3000 });
+      announceToSR('Organizer key copied to clipboard');
+    } catch {
+      showToast({ title: 'Organizer Key', message: hackathon.id, type: 'info', duration: 10000 });
     }
   }
 

@@ -67,22 +67,20 @@ export function homePage() {
           </div>
 
           <div class="home__actions" role="group" aria-label="Choose your role">
-            ${isOrganizer ? `
             <button class="home__action-card" 
                     id="action-resume" 
                     tabindex="0"
                     style="grid-column: 1 / -1; border-color: var(--accent-secondary);"
-                    aria-label="Resume active event. Press R for shortcut.">
+                    aria-label="Organizer Login. Press R for shortcut.">
               <div class="home__action-icon" aria-hidden="true" style="color: var(--accent-secondary);"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path></svg></div>
               <div class="home__action-content">
-                <div class="home__action-title">Resume Active Event</div>
+                <div class="home__action-title">Organizer Login</div>
                 <div class="home__action-desc">
-                  Re-enter the dashboard for your currently active hackathon.
+                  Resume an active event using your Organizer Key.
                 </div>
               </div>
               <kbd>R</kbd>
             </button>
-            ` : ''}
             <button class="home__action-card" 
                     id="action-create" 
                     tabindex="0"
@@ -204,13 +202,44 @@ export function homePage() {
             </div>
           </div>
         </div>
+
+        <!-- Resume Modal -->
+        <div class="modal-backdrop" id="modal-resume" role="dialog" aria-labelledby="resume-title" aria-modal="true">
+          <div class="modal">
+            <div class="modal__header">
+              <h2 id="resume-title" class="modal__title">Organizer Login</h2>
+              <p class="modal__desc">Enter your secret Organizer Key to resume managing your event.</p>
+            </div>
+            <div class="modal__body">
+              <div class="form-group">
+                <label class="form-label" for="input-resume-key">Organizer Key</label>
+                <input class="form-input form-input--mono" 
+                       id="input-resume-key" 
+                       type="text" 
+                       placeholder="Paste your 36-character key"
+                       autocomplete="off"
+                       spellcheck="false" />
+              </div>
+            </div>
+            <div class="modal__footer">
+              <button class="btn btn--ghost" id="btn-cancel-resume" tabindex="0">
+                Cancel <kbd>Esc</kbd>
+              </button>
+              <button class="btn btn--primary" id="btn-confirm-resume" tabindex="0">
+                Resume Event <kbd>↵</kbd>
+              </button>
+            </div>
+          </div>
+        </div>
       `;
 
       // ---- Wire up events ----
       const createModal = mainEl.querySelector('#modal-create');
       const joinModal = mainEl.querySelector('#modal-join');
+      const resumeModal = mainEl.querySelector('#modal-resume');
       const createBtn = mainEl.querySelector('#action-create');
       const joinBtn = mainEl.querySelector('#action-join');
+      const resumeBtn = mainEl.querySelector('#action-resume');
 
       function openCreate() {
         createModal.classList.add('modal-backdrop--active');
@@ -222,16 +251,24 @@ export function homePage() {
         setTimeout(() => mainEl.querySelector('#input-join-code')?.focus(), 100);
       }
 
+      function openResume() {
+        resumeModal.classList.add('modal-backdrop--active');
+        setTimeout(() => mainEl.querySelector('#input-resume-key')?.focus(), 100);
+      }
+
       function closeAll() {
         createModal.classList.remove('modal-backdrop--active');
         joinModal.classList.remove('modal-backdrop--active');
+        resumeModal.classList.remove('modal-backdrop--active');
       }
 
       createBtn.addEventListener('click', openCreate);
       joinBtn.addEventListener('click', openJoin);
+      resumeBtn.addEventListener('click', openResume);
 
       mainEl.querySelector('#btn-cancel-create').addEventListener('click', closeAll);
       mainEl.querySelector('#btn-cancel-join').addEventListener('click', closeAll);
+      mainEl.querySelector('#btn-cancel-resume').addEventListener('click', closeAll);
 
       // Close modal on backdrop click
       createModal.addEventListener('click', (e) => {
@@ -239,6 +276,9 @@ export function homePage() {
       });
       joinModal.addEventListener('click', (e) => {
         if (e.target === joinModal) closeAll();
+      });
+      resumeModal.addEventListener('click', (e) => {
+        if (e.target === resumeModal) closeAll();
       });
 
       // Create hackathon
@@ -355,23 +395,56 @@ export function homePage() {
         const actions = mainEl.querySelector('.home__actions');
         if (actions) {
           actions.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          const firstAction = mainEl.querySelector('#action-resume') || mainEl.querySelector('#action-create');
+          const firstAction = mainEl.querySelector('#action-resume');
           if (firstAction) firstAction.focus();
         }
       });
 
       // Resume Event
-      if (isOrganizer) {
-        const resumeBtn = mainEl.querySelector('#action-resume');
-        const resumeEvent = () => navigate(`/organizer/${session.hackathonId}`);
-        if (resumeBtn) resumeBtn.addEventListener('click', resumeEvent);
-        registerShortcut('r', 'Resume active event', resumeEvent, 'Navigation');
-      }
+      const handleResumeSubmit = async () => {
+        const key = mainEl.querySelector('#input-resume-key').value.trim();
+        if (!key) {
+          mainEl.querySelector('#input-resume-key').focus();
+          return;
+        }
+
+        const btn = mainEl.querySelector('#btn-confirm-resume');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Checking...';
+
+        try {
+          const { getHackathon } = await import('../lib/store.js');
+          const hackathon = await getHackathon(key); // Assuming key is the UUID
+          
+          if (!hackathon) throw new Error('Invalid key');
+
+          const { setSession } = await import('../lib/utils.js');
+          setSession({
+            hackathonId: hackathon.id,
+            role: 'organizer',
+            joinCode: hackathon.join_code,
+          });
+
+          navigate(`/organizer/${hackathon.id}`);
+        } catch (err) {
+          const { showToast } = await import('../lib/utils.js');
+          showToast({ title: 'Error', message: 'Invalid Organizer Key.', type: 'urgent' });
+          btn.disabled = false;
+          btn.innerHTML = 'Resume Event <kbd>↵</kbd>';
+        }
+      };
+
+      mainEl.querySelector('#btn-confirm-resume').addEventListener('click', handleResumeSubmit);
+
+      mainEl.querySelector('#input-resume-key').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleResumeSubmit();
+      });
 
       // Register keyboard shortcuts
       clearPageShortcuts();
       registerShortcut('c', 'Create a hackathon', openCreate, 'Navigation');
       registerShortcut('j', 'Join a hackathon', openJoin, 'Navigation');
+      registerShortcut('r', 'Organizer Login', openResume, 'Navigation');
       registerShortcut('Escape', 'Close dialog', closeAll, 'Global');
     },
 
